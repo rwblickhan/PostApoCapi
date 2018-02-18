@@ -1,4 +1,5 @@
 extern crate ggez;
+
 use ggez::conf;
 use ggez::event::*;
 use ggez::graphics;
@@ -9,7 +10,8 @@ use std::env;
 use std::path;
 
 struct MainState {
-    item: ItemEntity
+    item: ItemEntity,
+    holding_item: bool,
 }
 
 impl MainState {
@@ -17,7 +19,8 @@ impl MainState {
         ctx.print_resource_stats();
         let item = ItemEntity::new(ctx).unwrap();
         let s = MainState {
-            item: item
+            item: item,
+            holding_item: false,
         };
         Ok(s)
     }
@@ -39,16 +42,36 @@ impl EventHandler for MainState {
         Ok(())
     }
 
+    fn mouse_button_down_event(&mut self, _ctx: &mut Context, button: MouseButton, x: i32, y: i32) {
+        if button == MouseButton::Left {
+            let img = &self.item.image;
+            if x > self.item.xpos &&
+                x < self.item.xpos + (img.width() as i32) &&
+                y > self.item.ypos &&
+                y < self.item.ypos + (img.height() as i32) {
+                self.holding_item = true
+            }
+        }
+    }
+
+    fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: MouseButton, _x: i32, _y: i32) {
+        if button == MouseButton::Left {
+            self.holding_item = false
+        }
+    }
+
     fn mouse_motion_event(&mut self, _ctx: &mut Context, _state: MouseState, x: i32, y: i32, _xrel: i32, _yrel: i32) {
-        self.item.xpos = x;
-        self.item.ypos = y;
+        if self.holding_item {
+            self.item.xpos = x;
+            self.item.ypos = y;
+        }
     }
 }
 
 struct ItemEntity {
     image: graphics::Image,
     xpos: i32,
-    ypos: i32
+    ypos: i32,
 }
 
 impl ItemEntity {
@@ -57,7 +80,7 @@ impl ItemEntity {
         Ok(ItemEntity {
             image: img,
             xpos: 0,
-            ypos: 0
+            ypos: 0,
         })
     }
 }
